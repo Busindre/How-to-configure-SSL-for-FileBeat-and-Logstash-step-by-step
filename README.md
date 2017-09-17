@@ -4,11 +4,27 @@ How to configure SSL for FileBeat and Logstash step by step with OpenSSL (Create
 
 The Elasticsearch documentation "[Securing Communication With Logstash by Using SSL](https://www.elastic.co/guide/en/beats/filebeat/current/configuring-ssl-logstash.html)" does not show how to create with openssl the necessary keys and certificates to have the mutual authentication between FileBeat (output) and Logstash (input). It is not a difficult task but it can be very tedious if you are not familiar with the use of openssl.
 
-These are the steps to configure Filebeat with Logstash using SSL, mutual authentication and TLS 2.0 encryption.
+These are some errors that can be found in the FileBeat and Logstash logs when SSL is not properly configured.
+```
+# FileBeat.
 
+ERR Failed to publish events caused by: EOF
+ERR Connecting error publishing events (retrying): remote error: tls: handshake failure
+ERR Failed to publish events caused by: read tcp X.X.X.X:XXXXX->X.X.X.X:XXXX: i/o timeout
+
+
+# Logstash.
+
+Exception: javax.net.ssl.SSLHandshakeException: error:100000b8:SSL routines:OPENSSL_internal:NO_SHARED_CIPHER
+[ERROR][logstash.inputs.beats    ] Looks like you either have an invalid key or your private key was not in PKCS8 format. {:exception=>java.lang.IllegalArgumentException: File does not contain valid private key: /XXXX/XXXX.key}
+[INFO ][org.logstash.beats.BeatsHandler] Exception: javax.net.ssl.SSLHandshakeException: error:10000418:SSL routines:OPENSSL_internal:TLSV1_ALERT_UNKNOWN_CA
+[INFO ][org.logstash.beats.BeatsHandler] Exception: javax.net.ssl.SSLHandshakeException: General OpenSslEngine problem
+```
+
+These are the steps to configure Filebeat with Logstash using SSL, mutual authentication and TLS 2.0 encryption.
 **Tested in Logstash / Filebeat version**: 5.6
 
-### Logstash input beat configuration (files ca.crt,server.crt, and server.key).
+### Logstash input beat configuration (files ca.crt,server.crt, and server.key are needed).
 ```
 input {
   beats {
@@ -22,7 +38,7 @@ input {
 }
 ```
 
-### Filebeat output (SSL) configuration (files ca.crt, client.crt and client.key ).
+### Filebeat output (SSL) configuration (files ca.crt, client.crt and client.key are needed).
 ```
 output.logstash:
   hosts: ["logs.mycompany.com:5044"]
@@ -33,13 +49,13 @@ output.logstash:
   ssl.supported_protocols: "TLSv1.2"
 ```
 
-### CA (files ca.key and ca.crt).
+### CA (create files ca.key and ca.crt).
 ```bash
 openssl genrsa -out ca.key 2048
 openssl req -x509 -new -nodes -key ca.key -sha256 -days 3650 -out ca.crt
 ```
 
-### Logstasg server (files server.key and server.crt).
+### Logstasg server (create server.key and server.crt).
 
 File server.conf
 ```
@@ -78,7 +94,7 @@ openssl x509 -days 3650 -req -sha512 -in server.csr -CAserial serial -CA ca.crt 
 mv server.key server.key.pem && openssl pkcs8 -in server.key.pem -topk8 -nocrypt -out server.key
 ```
 
-### FileBeat shipper (files client.key and client.crt).
+### FileBeat shipper (create files client.key and client.crt).
 
 File client.conf.
 ```
