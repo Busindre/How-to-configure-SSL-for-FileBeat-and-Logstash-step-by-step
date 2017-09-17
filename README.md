@@ -6,6 +6,8 @@ The Elasticsearch documentation "[Securing Communication With Logstash by Using 
 
 These are the steps to configure Filebeat with Logstash using SSL, mutual authentication and TLS 2.0 encryption.
 
+**Tested in Logstash / Filebeat version**: 5.6
+
 ### Logstash input beat configuration (files ca.crt,server.crt, and server.key).
 ```
 input {
@@ -115,6 +117,6 @@ openssl req -sha512 -new -key client.key -out client.csr -config client.conf
 openssl x509 -days 3650 -req -sha512 -in client.csr -CAserial serial -CA ca.crt -CAkey ca.key -out client.crt -extensions v3_req -extensions usr_cert  -extfile client.conf
 ```
 ```
-# If the client key is not encrypted by passphrase, it can always be added later (filebeat "ssl.ssl_key_passphrase").
+# If the client key is not encrypted by passphrase, it can always be added later (filebeat "ssl.key_passphrase").
 # openssl rsa -des -in client.key -out client4.key
 ```
